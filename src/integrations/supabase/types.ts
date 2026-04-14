@@ -16,23 +16,35 @@ export type Database = {
     Tables: {
       todos: {
         Row: {
+          category: string | null
           completed: boolean
           created_at: string
+          description: string | null
+          due_date: string | null
           id: string
+          priority: string
           title: string
           user_id: string
         }
         Insert: {
+          category?: string | null
           completed?: boolean
           created_at?: string
+          description?: string | null
+          due_date?: string | null
           id?: string
+          priority?: string
           title: string
           user_id: string
         }
         Update: {
+          category?: string | null
           completed?: boolean
           created_at?: string
+          description?: string | null
+          due_date?: string | null
           id?: string
+          priority?: string
           title?: string
           user_id?: string
         }

@@ -4,11 +4,45 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Trash2, Plus, LogOut } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { CalendarDays, CheckCircle2, Flag, ListTodo, LogOut, Plus, Tag, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
+type Priority = "low" | "medium" | "high";
+
+type NewTaskState = {
+  title: string;
+  description: string;
+  category: string;
+  dueDate: string;
+  priority: Priority;
+};
+
+const initialTaskState: NewTaskState = {
+  title: "",
+  description: "",
+  category: "",
+  dueDate: "",
+  priority: "medium",
+};
+
+const priorityStyles: Record<Priority, string> = {
+  low: "bg-sky-100 text-sky-700 border-sky-200",
+  medium: "bg-amber-100 text-amber-800 border-amber-200",
+  high: "bg-rose-100 text-rose-700 border-rose-200",
+};
+
 const TodoList = ({ onSignOut }: { onSignOut: () => void }) => {
-  const [newTodo, setNewTodo] = useState("");
+  const [newTask, setNewTask] = useState<NewTaskState>(initialTaskState);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -25,15 +59,25 @@ const TodoList = ({ onSignOut }: { onSignOut: () => void }) => {
   });
 
   const addTodo = useMutation({
-    mutationFn: async (title: string) => {
+    mutationFn: async (task: NewTaskState) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
-      const { error } = await supabase.from("todos").insert({ title, user_id: user.id });
+
+      const payload = {
+        user_id: user.id,
+        title: task.title,
+        description: task.description || null,
+        category: task.category || null,
+        due_date: task.dueDate || null,
+        priority: task.priority,
+      };
+
+      const { error } = await supabase.from("todos").insert(payload);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["todos"] });
-      setNewTodo("");
+      setNewTask(initialTaskState);
     },
     onError: (e) => toast({ title: "Error", description: e.message, variant: "destructive" }),
   });
@@ -56,59 +100,178 @@ const TodoList = ({ onSignOut }: { onSignOut: () => void }) => {
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
-    if (newTodo.trim()) addTodo.mutate(newTodo.trim());
+    if (newTask.title.trim()) {
+      addTodo.mutate({
+        ...newTask,
+        title: newTask.title.trim(),
+        description: newTask.description.trim(),
+        category: newTask.category.trim(),
+      });
+    }
   };
 
-  return (
-    <div className="flex min-h-screen items-start justify-center bg-background p-4 pt-16">
-      <div className="w-full max-w-lg space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-foreground">My Todos</h1>
-          <Button variant="ghost" size="icon" onClick={onSignOut}>
-            <LogOut className="h-5 w-5" />
-          </Button>
-        </div>
+  const completedCount = todos.filter((todo) => todo.completed).length;
+  const openCount = todos.length - completedCount;
 
-        <form onSubmit={handleAdd} className="flex gap-2">
-          <Input
-            placeholder="What needs to be done?"
-            value={newTodo}
-            onChange={(e) => setNewTodo(e.target.value)}
-            className="flex-1"
+  return (
+    <div className="relative flex min-h-screen items-start justify-center overflow-hidden px-4 py-8 sm:py-12">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_8%,hsl(164_38%_84%_/_0.3),transparent_35%),radial-gradient(circle_at_86%_18%,hsl(17_88%_82%_/_0.28),transparent_42%)]" />
+
+      <main className="relative w-full max-w-2xl space-y-6">
+        <header className="flex flex-wrap items-start justify-between gap-4 rounded-2xl border border-border/80 bg-card/80 p-5 shadow-lg backdrop-blur-sm sm:p-6">
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Task board</p>
+            <h1 className="text-3xl font-bold text-foreground sm:text-4xl">My Todos</h1>
+            <p className="text-sm text-muted-foreground">Keep your day focused and ship one task at a time.</p>
+          </div>
+
+          <Button variant="outline" className="gap-2" onClick={onSignOut}>
+            <LogOut className="h-4 w-4" />
+            Sign out
+          </Button>
+        </header>
+
+        <section className="grid grid-cols-2 gap-3">
+          <Card className="border-border/70 bg-card/85 shadow-sm">
+            <CardContent className="flex items-center justify-between p-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Open</p>
+                <p className="text-2xl font-semibold text-foreground">{openCount}</p>
+              </div>
+              <ListTodo className="h-5 w-5 text-muted-foreground" />
+            </CardContent>
+          </Card>
+          <Card className="border-border/70 bg-card/85 shadow-sm">
+            <CardContent className="flex items-center justify-between p-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Completed</p>
+                <p className="text-2xl font-semibold text-foreground">{completedCount}</p>
+              </div>
+              <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+            </CardContent>
+          </Card>
+        </section>
+
+        <form onSubmit={handleAdd} className="space-y-3 rounded-xl border border-border/70 bg-card/85 p-3 shadow-sm sm:p-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Input
+              placeholder="Task title"
+              value={newTask.title}
+              onChange={(e) => setNewTask((prev) => ({ ...prev, title: e.target.value }))}
+              className="h-11 bg-background/80"
+            />
+
+            <Input
+              placeholder="Category (e.g. Work)"
+              value={newTask.category}
+              onChange={(e) => setNewTask((prev) => ({ ...prev, category: e.target.value }))}
+              className="h-11 bg-background/80"
+            />
+          </div>
+
+          <Textarea
+            placeholder="Description (optional)"
+            value={newTask.description}
+            onChange={(e) => setNewTask((prev) => ({ ...prev, description: e.target.value }))}
+            className="min-h-20 resize-none bg-background/80"
           />
-          <Button type="submit" size="icon" disabled={addTodo.isPending || !newTodo.trim()}>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Select
+              value={newTask.priority}
+              onValueChange={(value: Priority) => setNewTask((prev) => ({ ...prev, priority: value }))}
+            >
+              <SelectTrigger className="h-11 bg-background/80">
+                <SelectValue placeholder="Priority" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="low">Low priority</SelectItem>
+                <SelectItem value="medium">Medium priority</SelectItem>
+                <SelectItem value="high">High priority</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Input
+              type="date"
+              value={newTask.dueDate}
+              onChange={(e) => setNewTask((prev) => ({ ...prev, dueDate: e.target.value }))}
+              className="h-11 bg-background/80"
+            />
+          </div>
+
+          <Button
+            type="submit"
+            className="h-11 w-full gap-2"
+            disabled={addTodo.isPending || !newTask.title.trim()}
+          >
             <Plus className="h-5 w-5" />
+            Add task
           </Button>
         </form>
 
         {isLoading ? (
-          <p className="text-center text-muted-foreground">Loading...</p>
+          <div className="rounded-xl border border-border/70 bg-card/80 p-8 text-center text-muted-foreground shadow-sm">
+            Loading your tasks...
+          </div>
         ) : todos.length === 0 ? (
-          <p className="text-center text-muted-foreground py-8">No todos yet. Add one above!</p>
+          <div className="rounded-xl border border-dashed border-border bg-card/60 p-10 text-center">
+            <p className="text-lg font-medium text-foreground">No todos yet</p>
+            <p className="mt-1 text-sm text-muted-foreground">Add your first task above to get started.</p>
+          </div>
         ) : (
-          <ul className="space-y-2">
+          <ul className="space-y-3">
             {todos.map((todo) => (
               <li
                 key={todo.id}
-                className="flex items-center gap-3 rounded-lg border bg-card p-3 transition-colors"
+                className="group flex items-start gap-3 rounded-xl border border-border/70 bg-card/90 p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
               >
                 <Checkbox
                   checked={todo.completed}
                   onCheckedChange={(checked) =>
                     toggleTodo.mutate({ id: todo.id, completed: checked === true })
                   }
+                  className="mt-1"
                 />
-                <span
-                  className={`flex-1 ${
-                    todo.completed ? "text-muted-foreground line-through" : "text-card-foreground"
-                  }`}
-                >
-                  {todo.title}
-                </span>
+
+                <div className="flex-1 space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p
+                      className={`text-sm font-medium sm:text-base ${
+                        todo.completed ? "text-muted-foreground line-through" : "text-card-foreground"
+                      }`}
+                    >
+                      {todo.title}
+                    </p>
+                    <Badge variant="outline" className={priorityStyles[(todo.priority as Priority) ?? "medium"]}>
+                      <Flag className="mr-1 h-3 w-3" />
+                      {todo.priority}
+                    </Badge>
+                    {todo.category && (
+                      <Badge variant="secondary" className="gap-1">
+                        <Tag className="h-3 w-3" />
+                        {todo.category}
+                      </Badge>
+                    )}
+                  </div>
+
+                  {todo.description && (
+                    <p className="text-sm text-muted-foreground">
+                      {todo.description}
+                    </p>
+                  )}
+
+                  {todo.due_date && (
+                    <div className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                      <CalendarDays className="h-3.5 w-3.5" />
+                      Due {new Date(todo.due_date).toLocaleDateString()}
+                    </div>
+                  )}
+                </div>
+
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                  className="h-8 w-8 text-muted-foreground hover:text-destructive group-hover:bg-destructive/10"
                   onClick={() => deleteTodo.mutate(todo.id)}
                 >
                   <Trash2 className="h-4 w-4" />
@@ -117,7 +280,7 @@ const TodoList = ({ onSignOut }: { onSignOut: () => void }) => {
             ))}
           </ul>
         )}
-      </div>
+      </main>
     </div>
   );
 };

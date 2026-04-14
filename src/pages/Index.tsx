@@ -23,8 +23,11 @@ const Index = () => {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <p className="text-muted-foreground">Loading...</p>
+      <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,hsl(164_35%_84%_/_0.26),transparent_38%),radial-gradient(circle_at_82%_12%,hsl(17_88%_82%_/_0.24),transparent_42%)]" />
+        <div className="relative rounded-xl border border-border/80 bg-card/85 px-6 py-5 text-sm text-muted-foreground shadow-lg backdrop-blur-sm">
+          Preparing your workspace...
+        </div>
       </div>
     );
   }
