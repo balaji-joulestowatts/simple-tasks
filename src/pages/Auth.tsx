@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 
+import { CheckCircle2 } from "lucide-react";
+
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,61 +23,84 @@ const Auth = () => {
       : await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: "Authentication Error", description: error.message, variant: "destructive" });
     } else if (isSignUp) {
-      toast({ title: "Check your email", description: "We sent you a confirmation link." });
+      toast({ title: "Confirmation Sent", description: "Please check your email to activate your account." });
     }
 
     setLoading(false);
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-8">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_10%,hsl(17_85%_82%_/_0.35),transparent_45%),radial-gradient(circle_at_15%_85%,hsl(164_35%_80%_/_0.3),transparent_40%)]" />
+    <div className="relative flex min-h-screen items-center justify-center px-4 py-12">
+      <div className="flex w-full max-w-md flex-col items-center gap-8">
+        <div className="flex flex-col items-center gap-2">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary shadow-xl shadow-primary/30">
+            <CheckCircle2 className="h-8 w-8 text-white" />
+          </div>
+          <div className="text-center">
+            <h1 className="text-3xl font-black tracking-tighter sm:text-4xl text-foreground">FocusFlow</h1>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary mt-1">Productivity Reimagined</p>
+          </div>
+        </div>
 
-      <Card className="relative w-full max-w-md border-border/80 bg-card/90 shadow-xl backdrop-blur-sm">
-        <CardHeader className="space-y-2 text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-            Simple Tasks
-          </p>
-          <CardTitle className="text-3xl">
-            {isSignUp ? "Create your account" : "Welcome back"}
-          </CardTitle>
-          <CardDescription>
-            {isSignUp ? "Start organizing your day in seconds." : "Sign in to pick up where you left off."}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="h-11 bg-background/70"
-            />
-            <Input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              className="h-11 bg-background/70"
-            />
-            <Button type="submit" className="h-11 w-full text-base" disabled={loading}>
-              {loading ? "Loading..." : isSignUp ? "Sign Up" : "Sign In"}
-            </Button>
-          </form>
-          <button
-            onClick={() => setIsSignUp(!isSignUp)}
-            className="mt-5 w-full text-center text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            {isSignUp ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
-          </button>
-        </CardContent>
-      </Card>
+        <Card className="premium-card w-full p-8 border-none bg-white/40 dark:bg-black/40">
+          <CardHeader className="space-y-1 p-0 pb-6 text-center">
+            <CardTitle className="text-2xl font-bold tracking-tight">
+              {isSignUp ? "Create an account" : "Welcome back"}
+            </CardTitle>
+            <CardDescription className="text-muted-foreground/80 font-medium">
+              {isSignUp ? "Join us and start shipping today." : "Log in to your productivity hub."}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Email address</label>
+                <Input
+                  type="email"
+                  placeholder="name@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="h-12 border-none bg-secondary/50 focus-visible:ring-primary/40"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Password</label>
+                <Input
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  className="h-12 border-none bg-secondary/50 focus-visible:ring-primary/40"
+                />
+              </div>
+              <Button type="submit" className="h-12 w-full text-sm font-bold shadow-lg shadow-primary/20 rounded-xl mt-2" disabled={loading}>
+                {loading ? "Authenticating..." : isSignUp ? "GET STARTED" : "SIGN IN"}
+              </Button>
+            </form>
+
+            <div className="mt-8 flex flex-col items-center border-t border-border/50 pt-6">
+              <p className="text-sm text-muted-foreground mb-1">
+                {isSignUp ? "Already have an account?" : "New to FocusFlow?"}
+              </p>
+              <button
+                onClick={() => setIsSignUp(!isSignUp)}
+                className="text-sm font-bold text-primary hover:underline underline-offset-4"
+              >
+                {isSignUp ? "Login to your workspace" : "Create a free account"}
+              </button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/30 text-center">
+          Secure &bull; Encrypted &bull; Distributed
+        </p>
+      </div>
     </div>
   );
 };
