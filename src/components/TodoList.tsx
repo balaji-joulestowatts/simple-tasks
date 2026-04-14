@@ -7,6 +7,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -14,10 +22,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { CalendarDays, CheckCircle2, Flag, ListTodo, LogOut, Plus, Tag, Trash2 } from "lucide-react";
+import { CalendarDays, CheckCircle2, Flag, ListTodo, LogOut, Plus, Search, Tag, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 type Priority = "low" | "medium" | "high";
+type StatusFilter = "all" | "open" | "completed";
 
 type NewTaskState = {
   title: string;
@@ -43,6 +52,11 @@ const priorityStyles: Record<Priority, string> = {
 
 const TodoList = ({ onSignOut }: { onSignOut: () => void }) => {
   const [newTask, setNewTask] = useState<NewTaskState>(initialTaskState);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [priorityFilter, setPriorityFilter] = useState<"all" | Priority>("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -78,6 +92,7 @@ const TodoList = ({ onSignOut }: { onSignOut: () => void }) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["todos"] });
       setNewTask(initialTaskState);
+      setIsCreateDialogOpen(false);
     },
     onError: (e) => toast({ title: "Error", description: e.message, variant: "destructive" }),
   });
@@ -112,6 +127,33 @@ const TodoList = ({ onSignOut }: { onSignOut: () => void }) => {
 
   const completedCount = todos.filter((todo) => todo.completed).length;
   const openCount = todos.length - completedCount;
+  const categoryOptions = Array.from(
+    new Set(todos.map((todo) => todo.category?.trim()).filter(Boolean) as string[]),
+  ).sort((a, b) => a.localeCompare(b));
+
+  const filteredTodos = todos.filter((todo) => {
+    const normalizedSearch = searchQuery.trim().toLowerCase();
+    const todoPriority = (todo.priority as Priority) ?? "medium";
+    const normalizedCategory = todo.category?.trim() ?? "";
+
+    const matchesSearch =
+      normalizedSearch.length === 0 ||
+      todo.title.toLowerCase().includes(normalizedSearch) ||
+      (todo.description ?? "").toLowerCase().includes(normalizedSearch) ||
+      normalizedCategory.toLowerCase().includes(normalizedSearch);
+
+    const matchesStatus =
+      statusFilter === "all" ||
+      (statusFilter === "completed" && todo.completed) ||
+      (statusFilter === "open" && !todo.completed);
+
+    const matchesPriority = priorityFilter === "all" || todoPriority === priorityFilter;
+    const matchesCategory =
+      categoryFilter === "all" ||
+      (categoryFilter === "uncategorized" ? !normalizedCategory : normalizedCategory === categoryFilter);
+
+    return matchesSearch && matchesStatus && matchesPriority && matchesCategory;
+  });
 
   return (
     <div className="relative flex min-h-screen items-start justify-center overflow-hidden px-4 py-8 sm:py-12">
@@ -152,62 +194,134 @@ const TodoList = ({ onSignOut }: { onSignOut: () => void }) => {
           </Card>
         </section>
 
-        <form onSubmit={handleAdd} className="space-y-3 rounded-xl border border-border/70 bg-card/85 p-3 shadow-sm sm:p-4">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Input
-              placeholder="Task title"
-              value={newTask.title}
-              onChange={(e) => setNewTask((prev) => ({ ...prev, title: e.target.value }))}
-              className="h-11 bg-background/80"
-            />
+        <section className="space-y-3 rounded-xl border border-border/70 bg-card/85 p-3 shadow-sm sm:p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm font-medium text-foreground">Organize your tasks</p>
+            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="gap-2">
+                  <Plus className="h-5 w-5" />
+                  Create task
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-xl">
+                <DialogHeader>
+                  <DialogTitle>Create a new task</DialogTitle>
+                  <DialogDescription>
+                    Add title, details, and priority so your plan stays clear.
+                  </DialogDescription>
+                </DialogHeader>
 
-            <Input
-              placeholder="Category (e.g. Work)"
-              value={newTask.category}
-              onChange={(e) => setNewTask((prev) => ({ ...prev, category: e.target.value }))}
-              className="h-11 bg-background/80"
-            />
+                <form onSubmit={handleAdd} className="space-y-3">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <Input
+                      placeholder="Task title"
+                      value={newTask.title}
+                      onChange={(e) => setNewTask((prev) => ({ ...prev, title: e.target.value }))}
+                      className="h-11 bg-background/80"
+                    />
+
+                    <Input
+                      placeholder="Category (e.g. Work)"
+                      value={newTask.category}
+                      onChange={(e) => setNewTask((prev) => ({ ...prev, category: e.target.value }))}
+                      className="h-11 bg-background/80"
+                    />
+                  </div>
+
+                  <Textarea
+                    placeholder="Description (optional)"
+                    value={newTask.description}
+                    onChange={(e) => setNewTask((prev) => ({ ...prev, description: e.target.value }))}
+                    className="min-h-20 resize-none bg-background/80"
+                  />
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <Select
+                      value={newTask.priority}
+                      onValueChange={(value: Priority) => setNewTask((prev) => ({ ...prev, priority: value }))}
+                    >
+                      <SelectTrigger className="h-11 bg-background/80">
+                        <SelectValue placeholder="Priority" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="low">Low priority</SelectItem>
+                        <SelectItem value="medium">Medium priority</SelectItem>
+                        <SelectItem value="high">High priority</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    <Input
+                      type="date"
+                      value={newTask.dueDate}
+                      onChange={(e) => setNewTask((prev) => ({ ...prev, dueDate: e.target.value }))}
+                      className="h-11 bg-background/80"
+                    />
+                  </div>
+
+                  <Button
+                    type="submit"
+                    className="h-11 w-full gap-2"
+                    disabled={addTodo.isPending || !newTask.title.trim()}
+                  >
+                    <Plus className="h-5 w-5" />
+                    Add task
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
           </div>
 
-          <Textarea
-            placeholder="Description (optional)"
-            value={newTask.description}
-            onChange={(e) => setNewTask((prev) => ({ ...prev, description: e.target.value }))}
-            className="min-h-20 resize-none bg-background/80"
-          />
+          <div className="grid gap-3 lg:grid-cols-4">
+            <div className="relative lg:col-span-2">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search by title, description, or category"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-11 bg-background/80 pl-9"
+              />
+            </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Select
-              value={newTask.priority}
-              onValueChange={(value: Priority) => setNewTask((prev) => ({ ...prev, priority: value }))}
-            >
+            <Select value={statusFilter} onValueChange={(value: StatusFilter) => setStatusFilter(value)}>
+              <SelectTrigger className="h-11 bg-background/80">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All status</SelectItem>
+                <SelectItem value="open">Open only</SelectItem>
+                <SelectItem value="completed">Completed only</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={priorityFilter} onValueChange={(value: "all" | Priority) => setPriorityFilter(value)}>
               <SelectTrigger className="h-11 bg-background/80">
                 <SelectValue placeholder="Priority" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="low">Low priority</SelectItem>
-                <SelectItem value="medium">Medium priority</SelectItem>
-                <SelectItem value="high">High priority</SelectItem>
+                <SelectItem value="all">All priorities</SelectItem>
+                <SelectItem value="low">Low</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="high">High</SelectItem>
               </SelectContent>
             </Select>
-
-            <Input
-              type="date"
-              value={newTask.dueDate}
-              onChange={(e) => setNewTask((prev) => ({ ...prev, dueDate: e.target.value }))}
-              className="h-11 bg-background/80"
-            />
           </div>
 
-          <Button
-            type="submit"
-            className="h-11 w-full gap-2"
-            disabled={addTodo.isPending || !newTask.title.trim()}
-          >
-            <Plus className="h-5 w-5" />
-            Add task
-          </Button>
-        </form>
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="h-11 bg-background/80">
+              <SelectValue placeholder="Category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All categories</SelectItem>
+              <SelectItem value="uncategorized">Uncategorized</SelectItem>
+              {categoryOptions.map((category) => (
+                <SelectItem key={category} value={category}>
+                  {category}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </section>
 
         {isLoading ? (
           <div className="rounded-xl border border-border/70 bg-card/80 p-8 text-center text-muted-foreground shadow-sm">
@@ -216,11 +330,16 @@ const TodoList = ({ onSignOut }: { onSignOut: () => void }) => {
         ) : todos.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border bg-card/60 p-10 text-center">
             <p className="text-lg font-medium text-foreground">No todos yet</p>
-            <p className="mt-1 text-sm text-muted-foreground">Add your first task above to get started.</p>
+            <p className="mt-1 text-sm text-muted-foreground">Create your first task to get started.</p>
+          </div>
+        ) : filteredTodos.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-border bg-card/60 p-10 text-center">
+            <p className="text-lg font-medium text-foreground">No matching tasks</p>
+            <p className="mt-1 text-sm text-muted-foreground">Try changing your search or filters.</p>
           </div>
         ) : (
           <ul className="space-y-3">
-            {todos.map((todo) => (
+            {filteredTodos.map((todo) => (
               <li
                 key={todo.id}
                 className="group flex items-start gap-3 rounded-xl border border-border/70 bg-card/90 p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
