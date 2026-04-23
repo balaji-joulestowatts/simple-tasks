@@ -1,6 +1,8 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart";
 import {
   BarChart,
@@ -53,6 +55,8 @@ const salesData = [
 ];
 
 export default function Dashboard() {
+  const navigate = useNavigate();
+
   const trafficChartConfig = React.useMemo(
     () => ({
       visitors: { label: "Visitors", color: "#3b82f6" },
@@ -68,11 +72,16 @@ export default function Dashboard() {
     []
   );
 
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate("/auth");
+  };
+
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex h-full bg-background">
       {/* Sidebar */}
-      <aside className="hidden w-64 border-r bg-card/30 p-4 lg:block">
-        <div className="mb-6 px-2">
+      <aside className="hidden w-56 border-r bg-card/30 p-3 lg:block">
+        <div className="mb-3 px-2">
           <h2 className="text-lg font-semibold">My Dashboard</h2>
           <p className="text-sm text-muted-foreground">Overview & reports</p>
         </div>
@@ -95,24 +104,18 @@ export default function Dashboard() {
           >
             Sales
           </Link>
-          <Link
-            to="#settings"
-            className="block rounded-md px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
-          >
-            Settings
-          </Link>
-          <Link
-            to="/"
-            className="mt-4 block rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-          >
-            Back to Home
-          </Link>
         </nav>
+        <button
+          onClick={handleSignOut}
+          className="mt-3 block rounded-md px-3 py-2 text-sm text-red-500 hover:bg-accent hover:text-red-600"
+        >
+          Sign Out
+        </button>
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 p-4 lg:p-6">
-        <div className="mb-6 flex items-center justify-between">
+      <main className="flex-1">
+        <div className="mb-4 flex items-center justify-between">
           <div>
             <h1 id="overview" className="text-2xl font-semibold tracking-tight">
               Dashboard
@@ -121,7 +124,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <Card>
             <CardHeader>
               <CardTitle>Total Visitors</CardTitle>
@@ -153,7 +156,7 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
           {/* Traffic chart */}
           <Card>
             <CardHeader>
