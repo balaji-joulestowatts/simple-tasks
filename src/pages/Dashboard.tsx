@@ -25,9 +25,6 @@ const trafficData = [
   { month: "Oct", visitors: 312, signups: 150 },
   { month: "Nov", visitors: 280, signups: 125 },
   { month: "Dec", visitors: 330, signups: 170 }
-
-
-  
 ];
 
 const salesData = [
