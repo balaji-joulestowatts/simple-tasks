@@ -1,212 +1,249 @@
-import React from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
-import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart";
+import * as React from "react";
+import { Home, BarChart3, Settings, PieChart, Users, DollarSign } from "lucide-react";
 import {
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardDescription,
+} from "@/components/ui/card";
+import { ChartContainer, type ChartConfig } from "@/components/ui/chart";
+import {
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
-  CartesianGrid
+  CartesianGrid,
+  Tooltip,
+  BarChart,
+  Bar,
+  ResponsiveContainer,
 } from "recharts";
 
-
-
+const revenueData = [
+  { month: "Jan", desktop: 186, mobile: 80 },
+  { month: "Feb", desktop: 305, mobile: 200 },
+  { month: "Mar", desktop: 237, mobile: 120 },
+  { month: "Apr", desktop: 73, mobile: 190 },
+  { month: "May", desktop: 209, mobile: 130 },
+  { month: "Jun", desktop: 214, mobile: 140 },
+  { month: "Jul", desktop: 180, mobile: 150 },
+  { month: "Aug", desktop: 250, mobile: 170 },
+  { month: "Sep", desktop: 220, mobile: 160 },
+  { month: "Oct", desktop: 290, mobile: 200 },
+  { month: "Nov", desktop: 320, mobile: 230 },
+  { month: "Dec", desktop: 360, mobile: 260 },
+];
 
 const trafficData = [
-  { month: "Jan", visitors: 186, signups: 80 },
-  { month: "Feb", visitors: 305, signups: 120 },
-  { month: "Mar", visitors: 237, signups: 98 },
-  { month: "Apr", visitors: 73, signups: 30 },
-  { month: "May", visitors: 209, signups: 110 },
-  { month: "Jun", visitors: 214, signups: 95 },
-  { month: "Jul", visitors: 256, signups: 105 },
-  { month: "Aug", visitors: 298, signups: 130 },
-  { month: "Sep", visitors: 244, signups: 102 },
-  { month: "Oct", visitors: 312, signups: 150 },
-  { month: "Nov", visitors: 280, signups: 125 },
-  { month: "Dec", visitors: 330, signups: 170 }
+  { channel: "Organic", visits: 1200 },
+  { channel: "Paid", visits: 900 },
+  { channel: "Referral", visits: 650 },
+  { channel: "Social", visits: 780 },
+  { channel: "Email", visits: 410 },
 ];
 
+const revenueChartConfig: ChartConfig = {
+  desktop: {
+    label: "Desktop",
+    color: "hsl(var(--primary))",
+  },
+  mobile: {
+    label: "Mobile",
+    color: "hsl(var(--chart-2, 210 100% 56%))",
+  },
+};
 
+const trafficChartConfig: ChartConfig = {
+  visits: {
+    label: "Visits",
+    color: "hsl(var(--chart-3, 28 90% 54%))",
+  },
+};
 
-
-
-
-
-
-const salesData = [
-  { month: "Jan", sales: 1200 },
-  { month: "Feb", sales: 1800 },
-  { month: "Mar", sales: 1500 },
-  { month: "Apr", sales: 900 },
-  { month: "May", sales: 1600 },
-  { month: "Jun", sales: 1750 },
-  { month: "Jul", sales: 1900 },
-  { month: "Aug", sales: 2100 },
-  { month: "Sep", sales: 1700 },
-  { month: "Oct", sales: 2200 },
-  { month: "Nov", sales: 2000 },
-  { month: "Dec", sales: 2500 }
-];
-
-export default function Dashboard() {
-  const navigate = useNavigate();
-
-  const trafficChartConfig = React.useMemo(
-    () => ({
-      visitors: { label: "Visitors", color: "#3b82f6" },
-      signups: { label: "Signups", color: "#10b981" }
-    }),
-    []
-  );
-
-  const salesChartConfig = React.useMemo(
-    () => ({
-      sales: { label: "Sales", color: "#a855f7" }
-    }),
-    []
-  );
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth");
-  };
-
+function SidebarNav() {
   return (
-    <div className="flex h-full bg-background">
-      {/* Sidebar */}
-      <aside className="hidden w-56 border-r bg-card/30 p-3 lg:block">
-        <div className="mb-3 px-2">
-          <h2 className="text-lg font-semibold">My Dashboard</h2>
-          <p className="text-sm text-muted-foreground">Overview & reports</p>
-        </div>
-        <nav className="space-y-1">
-          <Link
-            to="#overview"
-            className="block rounded-md px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
+    <aside className="hidden w-64 shrink-0 border-r bg-background/60 p-4 lg:block">
+      <div className="mb-6 px-2">
+        <div className="text-lg font-semibold tracking-tight">Acme Corp</div>
+        <div className="text-xs text-muted-foreground">Admin Dashboard</div>
+      </div>
+      <nav aria-label="Sidebar" className="space-y-1">
+        <a
+          href="#overview"
+          className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-foreground/90 hover:bg-accent hover:text-accent-foreground"
+        >
+          <Home className="h-4 w-4" /> Overview
+        </a>
+        <a
+          href="#analytics"
+          className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-foreground/90 hover:bg-accent hover:text-accent-foreground"
+        >
+          <BarChart3 className="h-4 w-4" /> Analytics
+        </a>
+        <a
+          href="#settings"
+          className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-foreground/90 hover:bg-accent hover:text-accent-foreground"
+        >
+          <Settings className="h-4 w-4" /> Settings
+        </a>
+      </nav>
+      <div className="mt-8">
+        <div className="px-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Shortcuts</div>
+        <nav className="mt-2 space-y-1">
+          <a
+            href="#revenue"
+            className="block rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
           >
-            Overview
-          </Link>
-          <Link
-            to="#traffic"
-            className="block rounded-md px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
+            Revenue
+          </a>
+          <a
+            href="#traffic"
+            className="block rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
           >
             Traffic
-          </Link>
-          <Link
-            to="#sales"
-            className="block rounded-md px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
-          >
-            Sales
-          </Link>
+          </a>
         </nav>
-        <button
-          onClick={handleSignOut}
-          className="mt-3 block rounded-md px-3 py-2 text-sm text-red-500 hover:bg-accent hover:text-red-600"
-        >
-          Sign Out
-        </button>
-      </aside>
+      </div>
+    </aside>
+  );
+}
 
-      {/* Main content */}
+export default function Dashboard() {
+  return (
+    <div className="flex min-h-screen bg-background">
+      <SidebarNav />
+
       <main className="flex-1">
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <h1 id="overview" className="text-2xl font-semibold tracking-tight">
-              Dashboard
-            </h1>
-            <p className="text-sm text-muted-foreground">Key metrics and charts for your product.</p>
+        <header className="sticky top-0 z-10 border-b bg-background/80 backdrop-blur">
+          <div className="mx-auto max-w-7xl px-4 py-4">
+            <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+            <p className="text-sm text-muted-foreground">Key metrics and insights at a glance</p>
           </div>
-        </div>
+        </header>
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <Card>
-            <CardHeader>
-              <CardTitle>Total Visitors</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{trafficData.reduce((acc, d) => acc + d.visitors, 0)}</div>
-              <p className="text-xs text-muted-foreground">Year to date</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Total Signups</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{trafficData.reduce((acc, d) => acc + d.signups, 0)}</div>
-              <p className="text-xs text-muted-foreground">Year to date</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Total Sales</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">
-                ${salesData.reduce((acc, d) => acc + d.sales, 0).toLocaleString()}
-              </div>
-              <p className="text-xs text-muted-foreground">Year to date</p>
-            </CardContent>
-          </Card>
-        </div>
+        <div className="mx-auto max-w-7xl space-y-6 px-4 py-6">
+          {/* KPI Cards */}
+          <section id="overview" className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">$86,000</div>
+                <p className="text-xs text-muted-foreground">+12.5% from last month</p>
+              </CardContent>
+            </Card>
 
-        <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
-          {/* Traffic chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle id="traffic">Traffic Overview</CardTitle>
-            </CardHeader>
-            <CardContent className="h-[360px]">
-              <ChartContainer config={trafficChartConfig} className="h-full w-full">
-                <LineChart data={trafficData} margin={{ left: 12, right: 12 }}>
-                  <CartesianGrid strokeDasharray="4 4" className="stroke-border/50" />
-                  <XAxis dataKey="month" tickLine={false} axisLine={false} dy={8} />
-                  <YAxis tickLine={false} axisLine={false} dx={-8} />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <ChartLegend content={<ChartLegendContent />} />
-                  <Line
-                    type="monotone"
-                    dataKey="visitors"
-                    stroke="var(--color-visitors)"
-                    strokeWidth={2}
-                    dot={false}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="signups"
-                    stroke="var(--color-signups)"
-                    strokeWidth={2}
-                    dot={false}
-                  />
-                </LineChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                <CardTitle className="text-sm font-medium">Active Users</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">12,340</div>
+                <p className="text-xs text-muted-foreground">+3.1% from last week</p>
+              </CardContent>
+            </Card>
 
-          {/* Sales chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle id="sales">Sales by Month</CardTitle>
-            </CardHeader>
-            <CardContent className="h-[360px]">
-              <ChartContainer config={salesChartConfig} className="h-full w-full">
-                <BarChart data={salesData} margin={{ left: 12, right: 12 }}>
-                  <CartesianGrid strokeDasharray="4 4" className="stroke-border/50" />
-                  <XAxis dataKey="month" tickLine={false} axisLine={false} dy={8} />
-                  <YAxis tickLine={false} axisLine={false} dx={-8} />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <ChartLegend content={<ChartLegendContent />} />
-                  <Bar dataKey="sales" fill="var(--color-sales)" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
+                <PieChart className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">4.7%</div>
+                <p className="text-xs text-muted-foreground">+0.5% from last period</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                <CardTitle className="text-sm font-medium">New Customers</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">1,208</div>
+                <p className="text-xs text-muted-foreground">+8.2% from last month</p>
+              </CardContent>
+            </Card>
+          </section>
+
+          {/* Revenue Area Chart */}
+          <section id="analytics" className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle>Revenue (Desktop vs Mobile)</CardTitle>
+                <CardDescription>Monthly revenue breakdown by device</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80">
+                  <ChartContainer config={revenueChartConfig} className="h-full">
+                    <ResponsiveContainer>
+                      <AreaChart data={revenueData} margin={{ left: 12, right: 12 }}>
+                        <defs>
+                          <linearGradient id="fillDesktop" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="var(--color-desktop)" stopOpacity={0.7} />
+                            <stop offset="95%" stopColor="var(--color-desktop)" stopOpacity={0.1} />
+                          </linearGradient>
+                          <linearGradient id="fillMobile" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="var(--color-mobile)" stopOpacity={0.7} />
+                            <stop offset="95%" stopColor="var(--color-mobile)" stopOpacity={0.1} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2} />
+                        <XAxis dataKey="month" tickLine={false} axisLine={false} />
+                        <YAxis tickLine={false} axisLine={false} width={40} />
+                        <Tooltip />
+                        <Area
+                          type="monotone"
+                          dataKey="desktop"
+                          stroke="var(--color-desktop)"
+                          fill="url(#fillDesktop)"
+                          strokeWidth={2}
+                          activeDot={{ r: 4 }}
+                          name="Desktop"
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="mobile"
+                          stroke="var(--color-mobile)"
+                          fill="url(#fillMobile)"
+                          strokeWidth={2}
+                          activeDot={{ r: 4 }}
+                          name="Mobile"
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Traffic Channels Bar Chart */}
+            <Card id="traffic" className="lg:col-span-1">
+              <CardHeader>
+                <CardTitle>Traffic by Channel</CardTitle>
+                <CardDescription>Last 30 days</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80">
+                  <ChartContainer config={trafficChartConfig} className="h-full">
+                    <ResponsiveContainer>
+                      <BarChart data={trafficData} margin={{ left: 12, right: 12 }}>
+                        <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2} />
+                        <XAxis dataKey="channel" tickLine={false} axisLine={false} />
+                        <YAxis tickLine={false} axisLine={false} width={40} />
+                        <Tooltip />
+                        <Bar dataKey="visits" radius={[6, 6, 0, 0]} fill="var(--color-visits)" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
         </div>
       </main>
     </div>
