@@ -1,43 +1,49 @@
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import type { Session } from "@supabase/supabase-js";
-import Auth from "./Auth";
+import * as React from "react";
+import { Button } from "@/components/ui/button";
 import TodoList from "@/components/TodoList";
+import Dashboard from "./Dashboard";
 
-const Index = () => {
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+const Index: React.FC = () => {
+  const [active, setActive] = React.useState<"todo" | "dashboard">("todo");
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-    }).catch(() => {
-      setSession(null);
-      setLoading(false);
-    });
+  const links: { key: "todo" | "dashboard"; label: string }[] = [
+    { key: "todo", label: "Todo" },
+    { key: "dashboard", label: "Dashboard" },
+  ];
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
+  return (
+    <div className="min-h-screen flex">
+      <aside className="w-56 border-r bg-muted/30 p-4">
+        <div className="mb-4 text-sm font-semibold text-muted-foreground">Pages</div>
+        <nav className="flex flex-col gap-2">
+          {links.map((item) => (
+            <Button
+              key={item.key}
+              variant={active === item.key ? "secondary" : "ghost"}
+              className="justify-start"
+              onClick={() => setActive(item.key)}
+            >
+              {item.label}
+            </Button>
+          ))}
+        </nav>
+      </aside>
 
-    return () => subscription.unsubscribe();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,hsl(164_35%_84%_/_0.26),transparent_38%),radial-gradient(circle_at_82%_12%,hsl(17_88%_82%_/_0.24),transparent_42%)]" />
-        <div className="relative rounded-xl border border-border/80 bg-card/85 px-6 py-5 text-sm text-muted-foreground shadow-lg backdrop-blur-sm">
-          Preparing your workspace...
-        </div>
-      </div>
-    );
-  }
-
-  if (!session) return <Auth />;
-
-  return <TodoList onSignOut={() => supabase.auth.signOut()} />;
+      <main className="flex-1 p-6">
+        {active === "todo" ? (
+          <section aria-label="Todo list">
+            <h1 className="text-2xl font-semibold mb-4">Todo</h1>
+            <TodoList />
+          </section>
+        ) : (
+          <section aria-label="Dashboard">
+            <h1 className="text-2xl font-semibold mb-4">Dashboard</h1>
+            <Dashboard />
+          </section>
+        )}
+      </main>
+    </div>
+  );
 };
 
 export default Index;
