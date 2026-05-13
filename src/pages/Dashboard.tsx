@@ -13,6 +13,8 @@ import {
   YAxis,
   CartesianGrid
 } from "recharts";
+import Lottie from "lottie-react";
+import teamAnim from "../../../j2w-flow-insight/public/json/business-team-working-on-business-idea.json";
 
 
 
@@ -132,6 +134,16 @@ export default function Dashboard() {
             <CardContent>
               <div className="text-3xl font-bold">{trafficData.reduce((acc, d) => acc + d.visitors, 0)}</div>
               <p className="text-xs text-muted-foreground">Year to date</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Animation</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-48 w-full">
+                <Lottie animationData={teamAnim} loop={true} style={{ height: '100%', width: '100%' }} />
+              </div>
             </CardContent>
           </Card>
           <Card>
